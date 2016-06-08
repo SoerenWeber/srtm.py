@@ -41,14 +41,16 @@ class GeoElevationData:
     the earth -- this will load *many* files in memory!
     """
 
+    srtmgl1_files = None
     srtm1_files = None
     srtm3_files = None
 
     # Lazy loaded files used in current app:
     files = None
 
-    def __init__(self, srtm1_files, srtm3_files, leave_zipped=False,
+    def __init__(self, srtmgl1_files, srtm1_files, srtm3_files, leave_zipped=False,
                  file_handler=None):
+        self.srtmgl1_files = srtmgl1_files
         self.srtm1_files = srtm1_files
         self.srtm3_files = srtm3_files
 
@@ -104,7 +106,9 @@ class GeoElevationData:
 
         url = None
 
-        if (file_name in self.srtm1_files):
+        if (file_name in self.srtmgl1_files):
+            url = self.srtmgl1_files[file_name]
+        elif (file_name in self.srtm1_files):
             url = self.srtm1_files[file_name]
         elif (file_name in self.srtm3_files):
             url = self.srtm3_files[file_name]
@@ -149,7 +153,7 @@ class GeoElevationData:
         file_name = '%s%s%s%s.hgt' % (north_south, str(int(abs(mod_math.floor(latitude)))).zfill(2), 
                                       east_west, str(int(abs(mod_math.floor(longitude)))).zfill(3))
 
-        if not (file_name in self.srtm1_files) and not (file_name in self.srtm3_files):
+        if not (file_name in self.srtmgl1_files) and not (file_name in self.srtm1_files) and not (file_name in self.srtm3_files):
             #mod_logging.debug('No file found for ({0}, {1}) (file_name: {2})'.format(latitude, longitude, file_name))
             return None
 

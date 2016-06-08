@@ -24,13 +24,15 @@ from . import data      as mod_data
 from . import utils     as mod_utils
 from . import retriever as mod_retriever
 
+SRTMGL1_URL = 'http://e4ftl01.cr.usgs.gov/SRTM/SRTMGL1.003/2000.02.11/'
 SRTM1_URL = 'http://dds.cr.usgs.gov/srtm/version2_1/SRTM1/'
 SRTM3_URL = 'http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/'
 
 package_location = mod_data.__file__[: mod_data.__file__.rfind(mod_path.sep)]
 DEFAULT_LIST_JSON = package_location + mod_os.sep + 'list.json'
 
-def get_data(srtm1=True, srtm3=True, leave_zipped=False, file_handler=None,
+
+def get_data(srtmgl1=True, srtm1=True, srtm3=True, leave_zipped=False, file_handler=None,
              use_included_urls=True):
     """
     Get the utility object for querying elevation data.
@@ -53,46 +55,53 @@ def get_data(srtm1=True, srtm3=True, leave_zipped=False, file_handler=None,
     If use_included_urls is True urls to SRTM files included in the library 
     will be used. Set to false if you need to reload them on first run.
 
-    With srtm1 or srtm3 params you can decide which SRTM format to use. Srtm3 
+    With srtmgl1, srtm1 or srtm3 params you can decide which SRTM format to use. Srtm3
     has a resolution of three arc-seconds (cca 90 meters between points). 
-    Srtm1 has a resolution of one arc-second (cca 30 meters). Srtm1 is 
-    available only for the United states. If both srtm1 ans srtm3 are True and 
-    both files are present for a location -- the srtm1 will be used.
+    Srtm1 and Srtmgl1 have a resolution of one arc-second (cca 30 meters). Srtm1 is
+    available only for the United states. Srtmgl1 is available globally. If srtmgl1, srtm1 and srtm3 are True,
+    they will be tried in this order.
     """
     if not file_handler:
         file_handler = FileHandler()
 
-    if not srtm1 and not srtm3:
-        raise Exception('At least one of srtm1 and srtm3 must be True')
+    if not srtmgl1 and not srtm1 and not srtm3:
+        raise Exception('At least one of srtmgl1, srtm1 and srtm3 must be True')
 
-    srtm1_files, srtm3_files = _get_urls(use_included_urls, file_handler)
+    srtmgl1_files, srtm1_files, srtm3_files = _get_urls(use_included_urls, file_handler)
 
+    assert srtmgl1_files
     assert srtm1_files
     assert srtm3_files
 
+    if not srtmgl1:
+        srtmgl1_files = {}
     if not srtm1:
         srtm1_files = {}
     if not srtm3:
         srtm3_files = {}
 
-    assert srtm1_files or srtm3_files
+    assert srtmgl1_files or srtm1_files or srtm3_files
 
-    return mod_data.GeoElevationData(srtm1_files, srtm3_files, file_handler=file_handler,
+    return mod_data.GeoElevationData(srtmgl1_files, srtm1_files, srtm3_files, file_handler=file_handler,
                                      leave_zipped=leave_zipped)
+
 
 def _get_urls(use_included_urls, file_handler):
     files_list_file_name = 'list.json'
     try:
         urls_json = _get_urls_json(use_included_urls, file_handler)
-        return urls_json['srtm1'], urls_json['srtm3']
+        return urls_json['srtmgl1'], urls_json['srtm1'], urls_json['srtm3']
     except:
+        srtmgl1_files = None
         srtm1_files = mod_retriever.retrieve_all_files_urls(SRTM1_URL)
         srtm3_files = mod_retriever.retrieve_all_files_urls(SRTM3_URL)
 
         file_handler.write(files_list_file_name,
-                           mod_json.dumps({'srtm1': srtm1_files, 'srtm3': srtm3_files}, sort_keys=True, indent=4))
+                           mod_json.dumps({'srtmgl1': srtmgl1_files, 'srtm1': srtm1_files, 'srtm3': srtm3_files},
+                                          sort_keys=True, indent=4))
 
-        return srtm1_files, srtm3_files
+        return srtmgl1_files, srtm1_files, srtm3_files
+
 
 def _get_urls_json(use_included_urls, file_handler):
     if use_included_urls:
@@ -101,6 +110,7 @@ def _get_urls_json(use_included_urls, file_handler):
 
     contents = file_handler.read(files_list_file_name)
     return mod_json.loads(contents)
+
 
 class FileHandler:
     """
