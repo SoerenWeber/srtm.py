@@ -49,14 +49,12 @@ class GeoElevationData:
     srtm3_files = None
 
     auth = None
-    http_user = None
-    http_password = None
 
     # Lazy loaded files used in current app:
     files = None
 
     def __init__(self, srtmgl1_files, srtm1_files, srtm3_files, leave_zipped=False,
-                 file_handler=None):
+                 file_handler=None, http_user=None, http_password=None):
         self.srtmgl1_files = srtmgl1_files
         self.srtm1_files = srtm1_files
         self.srtm3_files = srtm3_files
@@ -67,8 +65,8 @@ class GeoElevationData:
 
         self.files = {}
 
-        if self.http_user is not None or self.http_password is not None:
-            auth = HTTPBasicAuth(self.http_user, self.http_password)
+        if http_user is not None or http_password is not None:
+            auth = HTTPBasicAuth(http_user, http_password)
 
     def get_elevation(self, latitude, longitude, approximate=None):
         geo_elevation_file = self.get_file(float(latitude), float(longitude))
