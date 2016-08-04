@@ -24,6 +24,7 @@ import logging as mod_logging
 import math as mod_math
 import re as mod_re
 import os.path as mod_path
+
 try:
     import cStringIO as mod_cstringio
 except:
@@ -33,6 +34,8 @@ from . import utils as mod_utils
 from . import retriever as mod_retriever
 
 import requests as mod_requests
+from requests.auth import HTTPBasicAuth
+
 
 class GeoElevationData:
     """
@@ -44,6 +47,10 @@ class GeoElevationData:
     srtmgl1_files = None
     srtm1_files = None
     srtm3_files = None
+
+    auth = None
+    http_user = None
+    http_password = None
 
     # Lazy loaded files used in current app:
     files = None
@@ -59,6 +66,9 @@ class GeoElevationData:
         self.file_handler = file_handler if file_handler else mod_utils.FileHandler()
 
         self.files = {}
+
+        if self.http_user is not None or self.http_password is not None:
+            auth = HTTPBasicAuth(self.http_user, self.http_password)
 
     def get_elevation(self, latitude, longitude, approximate=None):
         geo_elevation_file = self.get_file(float(latitude), float(longitude))
@@ -117,7 +127,7 @@ class GeoElevationData:
             #mod_logging.error('No file found: {0}'.format(file_name))
             return None
 
-        r = mod_requests.get(url)
+        r = mod_requests.get(url, auth=self.auth)
         if r.status_code < 200 or 300 <= r.status_code:
             raise Exception('Cannot retrieve %s' % url)
         mod_logging.info('Retrieving {0}'.format(url))

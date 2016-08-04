@@ -33,7 +33,7 @@ DEFAULT_LIST_JSON = package_location + mod_os.sep + 'list.json'
 
 
 def get_data(srtmgl1=True, srtm1=True, srtm3=True, leave_zipped=False, file_handler=None,
-             use_included_urls=True):
+             use_included_urls=True, http_user=None, http_password=None):
     """
     Get the utility object for querying elevation data.
 
@@ -83,7 +83,7 @@ def get_data(srtmgl1=True, srtm1=True, srtm3=True, leave_zipped=False, file_hand
     assert srtmgl1_files or srtm1_files or srtm3_files
 
     return mod_data.GeoElevationData(srtmgl1_files, srtm1_files, srtm3_files, file_handler=file_handler,
-                                     leave_zipped=leave_zipped)
+                                     leave_zipped=leave_zipped, http_user=http_user, http_password=http_password)
 
 
 def _get_urls(use_included_urls, file_handler):
