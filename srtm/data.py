@@ -66,7 +66,7 @@ class GeoElevationData:
         self.files = {}
 
         if http_user is not None or http_password is not None:
-            auth = HTTPBasicAuth(http_user, http_password)
+            self.auth = HTTPBasicAuth(http_user, http_password)
 
     def get_elevation(self, latitude, longitude, approximate=None):
         geo_elevation_file = self.get_file(float(latitude), float(longitude))
