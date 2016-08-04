@@ -113,9 +113,11 @@ class GeoElevationData:
             return mod_utils.unzip(data)
 
         url = None
+        requires_auth = False
 
         if (file_name in self.srtmgl1_files):
             url = self.srtmgl1_files[file_name]
+            requires_auth = True
         elif (file_name in self.srtm1_files):
             url = self.srtm1_files[file_name]
         elif (file_name in self.srtm3_files):
@@ -125,7 +127,12 @@ class GeoElevationData:
             #mod_logging.error('No file found: {0}'.format(file_name))
             return None
 
-        r = mod_requests.get(url, auth=self.auth)
+        if requires_auth and self.auth is not None:
+            redirect = mod_requests.get(url, allow_redirects=False)
+            r = mod_requests.get(redirect.headers['Location'], auth=self.auth)
+        else:
+            r = mod_requests.get(url)
+
         if r.status_code < 200 or 300 <= r.status_code:
             raise Exception('Cannot retrieve %s' % url)
         mod_logging.info('Retrieving {0}'.format(url))
